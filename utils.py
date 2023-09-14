@@ -1,31 +1,29 @@
 from pathlib import Path
 import torch 
-from datasets import load_metric,load_dataset
 import pandas as pd
 import numpy as np
 from time import perf_counter 
 import matplotlib.pyplot as plt
-query = """hey, I want to buy a macbook pro"""
-accuracy_score = load_metric("accuracy") 
-clinc = load_dataset("clinc_oos", "plus")
-intents = clinc["train"].features["intent"]
+
+
+# benchmark model
 class PerformanceBenchmark: 
-    def __init__(self, pipeline , dataset , optim_type = "BERT baseline"):
+    def __init__(self, pipeline , dataset ,intents,query,accuracy_score,  optim_type = "BERT baseline"):
         self.pipeline = pipeline 
         self.dataset = dataset 
+        self.intents = intents
+        self.query = query
+        self.accuracy_score = accuracy_score
         self.optim_type = optim_type
     def compute_accuracy(self):
-        """This overrides the PerformanceBenchmark.compute_accuracy() method"""
-        # use gpu 
         preds, labels = [], []
         for example in self.dataset:
             input = example["text"]
             pred = self.pipeline(input)[0]["label"]
             pred = self.pipeline(example["text"])[0]["label"]
-            preds.append(intents.str2int(pred))
+            preds.append(self.intents.str2int(pred))
             labels.append(example["intent"])
-        accuracy = accuracy_score.compute(predictions=preds, references=labels)
-        # accuracy = 0
+        accuracy = self.accuracy_score.compute(predictions=preds, references=labels)
         print(f"Accuracy on test set - {accuracy['accuracy']:.3f}")
         return accuracy
     def compute_size(self): 
@@ -37,14 +35,14 @@ class PerformanceBenchmark:
         print(f"Model size (MB) - {size_mb:.2f}")  
         return {"size_mb": size_mb}
     def time_pipeline(self):
-        """This overrides the PerformanceBenchmark.time_pipeline() method""" 
         latencies = [] 
+        print(latencies)
         for _ in range(10):
-            _ = self.pipeline(query)
+            _ = self.pipeline(self.query)
         # time run 
-        for _ in range(100):
+        for _ in range(1000):
             start_time = perf_counter() 
-            _ = self.pipeline(query)
+            _ = self.pipeline(self.query)
             latency = perf_counter() - start_time 
             latencies.append(latency)
         # compute run statistics
@@ -58,7 +56,7 @@ class PerformanceBenchmark:
         metrics[self.optim_type].update(self.time_pipeline())  # update dictionary will add new k-v pair to the dictionary
         metrics[self.optim_type].update(self.compute_accuracy())
         return metrics
-    
+# plot results
 def plot_metrics(perf_metrics, current_optim_type):
     df = pd.DataFrame.from_dict(perf_metrics, orient='index')
     for idx in df.index:
