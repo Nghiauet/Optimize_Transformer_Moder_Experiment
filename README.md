@@ -8,3 +8,9 @@ Techniques to speed up the predictions and reduce the memory footprint include
 - quantization training
 - pruning
 - graph optimization ( with ONNX and ORT)
+## Credits
+
+These experiments follow chapter 8, "Making Transformers Efficient in Production", of
+*Natural Language Processing with Transformers* by Lewis Tunstall, Leandro von Werra and Thomas Wolf (O'Reilly, 2022).
+The teacher and student checkpoints are the book's models on the Hugging Face Hub:
+`transformersbook/bert-base-uncased-finetuned-clinc` and `transformersbook/distilbert-base-uncased-distilled-clinc`.
